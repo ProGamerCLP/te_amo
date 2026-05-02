@@ -139,7 +139,12 @@ const MEDIA_CONFIG = {
         "Screenshot_2026-04-29-15-56-25-941_com.zhiliaoapp.musically.jpg",
         "Screenshot_2026-04-29-15-56-27-725_com.zhiliaoapp.musically.jpg"
     ],
-    frases: ["TE AMO", "ERES MI TODO", "MI VIDA", "ME ENCANTAS", "ERES MI MUNDO", "MI CIELO", "MI TESORO"]
+    frases: [
+        "TE AMO", "ERES MI TODO", "MI VIDA", "ME ENCANTAS", "ERES MI MUNDO", 
+        "MI CIELO", "MI TESORO", "CONTIGO SIEMPRE", "MI REINA", "ERES MAGIA",
+        "MI LUGAR SEGURO", "MI DESTINO", "TE ADORO", "ERES ÚNICA", "MI AMOR",
+        "SIEMPRE JUNTOS", "MI PEDACITO DE CIELO", "MI RAZÓN DE SER", "ERES MI LUZ"
+    ]
 };
 
 /* ==========================================
@@ -281,7 +286,7 @@ function armarEscena3D() {
     controles = new THREE.OrbitControls(camara, renderizador.domElement);
     controles.enableDamping = true;
     controles.autoRotate = true;
-    controles.autoRotateSpeed = 0.2;
+    controles.autoRotateSpeed = 0.1; // Más lento (antes 0.2)
     const luzAmbiental = new THREE.AmbientLight(0x444477, 0.4);
     escena.add(luzAmbiental);
     const luzPunto = new THREE.PointLight(0xff69b4, 1.2, 60);
@@ -346,13 +351,13 @@ function crearMensajesAmor() {
         );
         
         // Distribución más amplia para 122 fotos
-        const dist = 15 + Math.random() * 25; // Entre 15 y 40 de distancia
+        const dist = 15 + Math.random() * 25; 
         const ang = Math.random() * Math.PI * 2;
-        const alt = (Math.random() - 0.5) * 30; // Entre -15 y 15 de altura
+        const alt = (Math.random() - 0.5) * 30; 
         
         mesh.position.set(Math.cos(ang) * dist, alt, Math.sin(ang) * dist);
         escena.add(mesh);
-        objectsMessage.push({ malla: mesh, alturaOriginal: alt, velocidad: 0.15 + Math.random() * 0.25, angulo: ang, distancia: dist });
+        objectsMessage.push({ malla: mesh, alturaOriginal: alt, velocidad: 0.1 + Math.random() * 0.15, angulo: ang, distancia: dist }); // Más lento (antes 0.15-0.25)
     });
 
     // 2. Añadir frases de amor
@@ -405,17 +410,28 @@ function manejarToque(e) {
 }
 
 function crearExplosionUI(x, y) {
-    const div = document.createElement('div');
-    div.className = 'explosion-texto';
-    div.innerText = MEDIA_CONFIG.frases[Math.floor(Math.random() * MEDIA_CONFIG.frases.length)];
-    div.style.left = x + 'px';
-    div.style.top = y + 'px';
-    document.body.appendChild(div);
-    setTimeout(() => div.remove(), 3000);
+    // SALEN VARIAS PALABRAS A LA VEZ (5 FRASES)
+    for (let i = 0; i < 5; i++) {
+        setTimeout(() => {
+            const div = document.createElement('div');
+            div.className = 'explosion-texto';
+            div.innerText = MEDIA_CONFIG.frases[Math.floor(Math.random() * MEDIA_CONFIG.frases.length)];
+            
+            // Dispersión de las palabras
+            const offX = (Math.random() - 0.5) * 200;
+            const offY = (Math.random() - 0.5) * 200;
+            
+            div.style.left = (x + offX) + 'px';
+            div.style.top = (y + offY) + 'px';
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 4000); // Más tiempo en pantalla (lento)
+        }, i * 200);
+    }
 }
 
 function crearLluviaCorazonesUI() {
-    for (let i = 0; i < 70; i++) {
+    // LLUVIA REDUCIDA PARA EVITAR LAG (35 CORAZONES)
+    for (let i = 0; i < 35; i++) {
         setTimeout(() => {
             const c = document.createElement('div');
             c.className = 'corazon-volador';
@@ -424,12 +440,12 @@ function crearLluviaCorazonesUI() {
             c.style.top = Math.random() * 100 + 'vh';
             const destX = (Math.random() - 0.5) * 40; 
             c.style.setProperty('--destX', destX + 'vw');
-            const duracion = Math.random() * 3 + 2;
+            const duracion = Math.random() * 4 + 4; // Mucho más lento (4-8s)
             c.style.fontSize = (Math.random() * 30 + 15) + 'px';
-            c.style.animation = `explotarCorazon ${duracion}s ease-in forwards`;
+            c.style.animation = `explotarCorazon ${duracion}s ease-in-out forwards`;
             document.body.appendChild(c);
             setTimeout(() => c.remove(), duracion * 1000);
-        }, i * 10);
+        }, i * 25);
     }
 }
 
@@ -473,10 +489,10 @@ function crearEstrellasCSS(cant) {
 
 function animarFase2() {
     requestAnimationFrame(animarFase2);
-    if (saturno) saturno.rotation.y += 0.001;
+    if (saturno) saturno.rotation.y += 0.0005; // Más lento (antes 0.001)
     objectsTextRing.forEach((obj, i) => {
-        obj.rotation.y += 0.001;
-        obj.position.y = Math.sin(Date.now() * 0.001 + i * 0.1) * 0.2;
+        obj.rotation.y += 0.0005; // Más lento
+        obj.position.y = Math.sin(Date.now() * 0.0005 + i * 0.1) * 0.2;
         obj.lookAt(camara.position);
     });
     const t = Date.now() * 0.001;
