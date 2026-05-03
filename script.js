@@ -4,10 +4,20 @@
 let phase1Stage, phase1Container, captureContainers, captureIndex;
 let escena, camara, renderizador, saturno, controles, fuente;
 let objectsMessage = [], objectsTextRing = [];
-let videosArray = []; // Para gestionar el ciclo de los videos
 let audioHabilitado = false, audioReproducido = false;
 let lluviaCorazonesActiva = false, contadorToques = 0;
 let fase2Iniciada = false, indiceFrase = 0;
+let videosArray = []; // Para gestionar el ciclo de los videos
+
+// REPRODUCTOR GLOBAL ÚNICO (Optimización extrema para evitar Context Lost)
+let globalVideoElement = document.createElement('video');
+globalVideoElement.muted = true;
+globalVideoElement.playsInline = true;
+globalVideoElement.crossOrigin = "anonymous";
+let globalVideoTexture = new THREE.VideoTexture(globalVideoElement);
+globalVideoTexture.minFilter = THREE.LinearFilter;
+globalVideoTexture.magFilter = THREE.LinearFilter;
+globalVideoTexture.generateMipmaps = false;
 
 const cargadorTexturas = new THREE.TextureLoader();
 const cargadorFuentes = new THREE.FontLoader();
@@ -486,50 +496,25 @@ function crearAnilloTexto() {
 }
 
 function crearMensajesAmor() {
-    // 1. Añadir fotos y videos reales de img/
-    // Limitamos a los 120 más recientes para evitar que la GPU explote (Context Lost)
-    const mensajesLimitados = MEDIA_CONFIG.mensajes.slice(-120);
-    
-    mensajesLimitados.forEach((filename, i) => {
+    // 1. Procesamos la lista completa para cargar las FOTOS.
+    MEDIA_CONFIG.mensajes.forEach((filename, i) => {
         const isVideo = filename.toLowerCase().endsWith('.mp4');
         const url = 'img/' + filename;
         let material;
 
-        if (filename.toLowerCase().endsWith('.mp4')) {
-            const video = document.createElement('video');
-            video.src = url;
-            video.loop = false; // Desactivamos loop para controlar la pausa de 30s
-            video.muted = true;
-            video.playsInline = true;
-            video.autoplay = false; // No arrancar de golpe
-            video.setAttribute('webkit-playsinline', 'true');
-            video.setAttribute('preload', 'metadata');
-            
-            video.onerror = () => {
-                console.error("Fallo crítico en video:", url);
-                // Si el video falla, no queremos que la malla vacía consuma recursos
-                if (material && material.map) material.map.dispose();
-            };
-            
-            // Lógica de reinicio tras 30 segundos
-            video.onended = () => {
-                setTimeout(() => {
-                    video.play().catch(() => {});
-                }, 30000); // Esperar 30 segundos
-            };
-
-            videosArray.push(video);
-            
-            const videoTex = new THREE.VideoTexture(video);
-            videoTex.minFilter = THREE.LinearFilter;
-            videoTex.magFilter = THREE.LinearFilter;
-            videoTex.generateMipmaps = false; // CRÍTICO: Evita lag al no regenerar mipmaps por cada frame
-            
-            material = new THREE.MeshBasicMaterial({ map: videoTex, side: THREE.DoubleSide });
+        if (isVideo) {
+            // Los videos nacen como un lienzo "apagado" (púrpura muy oscuro)
+            material = new THREE.MeshBasicMaterial({ 
+                color: 0x1a0512, 
+                side: THREE.DoubleSide, 
+                transparent: true, 
+                opacity: 0.8 
+            });
         } else {
+            // Las imágenes se cargan normalmente
             const tex = cargadorTexturas.load(url, (loadedTex) => {
                 loadedTex.anisotropy = renderizador.capabilities.getMaxAnisotropy();
-                loadedTex.generateMipmaps = false; // Ahorro de memoria extra
+                loadedTex.generateMipmaps = false;
                 loadedTex.minFilter = THREE.LinearFilter;
                 loadedTex.magFilter = THREE.LinearFilter;
             });
@@ -538,14 +523,19 @@ function crearMensajesAmor() {
 
         const mesh = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), material);
 
-        // Distribución más amplia para 122+ elementos
         const dist = 15 + Math.random() * 25;
         const ang = Math.random() * Math.PI * 2;
         const alt = (Math.random() - 0.5) * 30;
 
         mesh.position.set(Math.cos(ang) * dist, alt, Math.sin(ang) * dist);
         escena.add(mesh);
+        
         objectsMessage.push({ malla: mesh, alturaOriginal: alt, velocidad: 0.1 + Math.random() * 0.15, angulo: ang, distancia: dist });
+
+        if (isVideo) {
+            // Guardamos la malla del video en la fila de reproducción secuencial
+            videosArray.push({ mesh: mesh, url: url, originalMaterial: material });
+        }
     });
 
     // 2. Añadir frases de amor
@@ -715,27 +705,33 @@ function startSequentialVideoPlayback() {
     if (videosArray.length === 0) return;
     
     let currentVideoIndex = 0;
-    const playDuration = 8000; // 8 seconds per video before switching
+    const playDuration = 8000; // Reproduce cada video por 8 segundos
 
     function playNextVideo() {
-        // Pause all videos to free up decoding memory
-        videosArray.forEach(v => {
-            if (!v.paused) v.pause();
+        // 1. Devolver el video anterior a su estado "apagado"
+        const prevIndex = currentVideoIndex === 0 ? videosArray.length - 1 : currentVideoIndex - 1;
+        const prevData = videosArray[prevIndex];
+        prevData.mesh.material = prevData.originalMaterial;
+
+        // 2. Encender la malla del video actual
+        const currentData = videosArray[currentVideoIndex];
+        
+        // Le pasamos la textura viva a esta malla
+        currentData.mesh.material = new THREE.MeshBasicMaterial({ 
+            map: globalVideoTexture, 
+            side: THREE.DoubleSide 
         });
 
-        // Get the current video in the queue
-        const currentVideo = videosArray[currentVideoIndex];
-        
-        // Play it (wrapped in a catch for browser autoplay policies)
-        currentVideo.play().catch(e => console.log("Waiting for user interaction to play video"));
+        // 3. Cargamos la ruta en el reproductor maestro y reproducimos
+        globalVideoElement.src = currentData.url;
+        globalVideoElement.load();
+        globalVideoElement.play().catch(e => console.log("Esperando toque en pantalla para autorizar video..."));
 
-        // Advance the index, loop back to 0 if we reach the end
+        // 4. Preparar el turno del siguiente
         currentVideoIndex = (currentVideoIndex + 1) % videosArray.length;
-
-        // Schedule the next sequence
         setTimeout(playNextVideo, playDuration);
     }
 
-    // Start the endless loop after a 5-second initial scene delay
+    // Iniciar el ciclo infinito 5 segundos después de que cargue la galaxia
     setTimeout(playNextVideo, 5000);
 }
