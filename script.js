@@ -508,7 +508,7 @@ function crearMensajesAmor() {
     // 1. Procesamos la lista completa para cargar las FOTOS.
     MEDIA_CONFIG.mensajes.forEach((filename, i) => {
         const isVideo = filename.toLowerCase().endsWith('.mp4');
-        const url = 'img/' + filename;
+        const url = isVideo ? filename : 'img/' + filename;
         let material;
 
         if (isVideo) {
