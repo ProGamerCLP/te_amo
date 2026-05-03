@@ -4,6 +4,7 @@
 let phase1Stage, phase1Container, captureContainers, captureIndex;
 let escena, camara, renderizador, saturno, controles, fuente;
 let objectsMessage = [], objectsTextRing = [];
+let videosArray = []; // Para gestionar el ciclo de los videos
 let audioHabilitado = false, audioReproducido = false;
 let lluviaCorazonesActiva = false, contadorToques = 0;
 let fase2Iniciada = false, indiceFrase = 0;
@@ -403,6 +404,15 @@ function iniciarFase2() {
         (fuenteCargada) => {
             fuente = fuenteCargada;
             armarEscena3D();
+            
+            // INICIO ESCALONADO DE VIDEOS: Para evitar lag extremo
+            videosArray.forEach((v, index) => {
+                setTimeout(() => {
+                    v.play().catch(() => {
+                        console.log("Video bloqueado, esperando interacción");
+                    });
+                }, 10000 + (index * 500)); // Empiezan tras 10s, uno cada medio segundo
+            });
         },
         undefined,
         (err) => {
@@ -416,7 +426,11 @@ function armarEscena3D() {
     escena = new THREE.Scene();
     camara = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
     camara.position.set(0, 10, 45); // Alejar cámara para ver más objetos
-    renderizador = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderizador = new THREE.WebGLRenderer({ 
+        antialias: true, 
+        alpha: true,
+        powerPreference: 'high-performance' // Pedir máximo rendimiento al hardware
+    });
     renderizador.setSize(window.innerWidth, window.innerHeight);
     renderizador.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     const container = document.getElementById('contenedor-escena');
@@ -438,7 +452,7 @@ function armarEscena3D() {
 }
 
 function crearSaturno() {
-    const geo = new THREE.SphereGeometry(4, 128, 128);
+    const geo = new THREE.SphereGeometry(4, 64, 64); // Reducido de 128 a 64 para optimizar polígonos
     const mat = new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 20 });
     saturno = new THREE.Mesh(geo, mat);
     saturno.castShadow = true;
@@ -486,19 +500,28 @@ function crearMensajesAmor() {
         if (filename.toLowerCase().endsWith('.mp4')) {
             const video = document.createElement('video');
             video.src = url;
-            video.loop = true;
+            video.loop = false; // Desactivamos loop para controlar la pausa de 30s
             video.muted = true;
             video.playsInline = true;
-            video.autoplay = true;
+            video.autoplay = false; // No arrancar de golpe
             video.setAttribute('webkit-playsinline', 'true');
-            video.setAttribute('preload', 'metadata'); // Solo cargar metadatos para no saturar
+            video.setAttribute('preload', 'metadata');
             
-            // NO añadir al document.body para evitar lag
             video.onerror = () => console.error("Fallo crítico en video:", url);
+            
+            // Lógica de reinicio tras 30 segundos
+            video.onended = () => {
+                setTimeout(() => {
+                    video.play().catch(() => {});
+                }, 30000); // Esperar 30 segundos
+            };
+
+            videosArray.push(video);
             
             const videoTex = new THREE.VideoTexture(video);
             videoTex.minFilter = THREE.LinearFilter;
             videoTex.magFilter = THREE.LinearFilter;
+            videoTex.generateMipmaps = false; // CRÍTICO: Evita lag al no regenerar mipmaps por cada frame
             
             material = new THREE.MeshBasicMaterial({ map: videoTex, side: THREE.DoubleSide });
         } else {
