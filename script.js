@@ -6,6 +6,7 @@ let escena, camara, renderizador, saturno, controles, fuente;
 let objectsMessage = [], objectsTextRing = [];
 let audioHabilitado = false, audioReproducido = false;
 let lluviaCorazonesActiva = false, contadorToques = 0;
+let fase2Iniciada = false, indiceFrase = 0;
 
 const cargadorTexturas = new THREE.TextureLoader();
 const cargadorFuentes = new THREE.FontLoader();
@@ -15,7 +16,8 @@ const MEDIA_CONFIG = {
     audio: 'Manuel Carrasco - Uno X Uno.mp3',
     saturno: 'galaxy-love2-main/1.jpg',
     mensajes: [
-        // Lista completa de tus 122 fotos en la carpeta img/
+        "Screenrecorder-2026-02-06-09-47-13-757.mp4",
+        "Screenrecorder-2026-02-06-12-22-23-223.mp4",
         "Screenshot_2026-03-02-11-40-42-825_com.zhiliaoapp.musically.jpg",
         "Screenshot_2026-03-02-12-39-44-264_com.zhiliaoapp.musically.jpg",
         "Screenshot_2026-03-02-12-40-18-570_com.zhiliaoapp.musically.jpg",
@@ -137,13 +139,137 @@ const MEDIA_CONFIG = {
         "Screenshot_2026-04-25-20-43-35-229_com.zhiliaoapp.musically.jpg",
         "Screenshot_2026-04-25-20-48-32-622_com.zhiliaoapp.musically.jpg",
         "Screenshot_2026-04-29-15-56-25-941_com.zhiliaoapp.musically.jpg",
-        "Screenshot_2026-04-29-15-56-27-725_com.zhiliaoapp.musically.jpg"
+        "Screenshot_2026-04-29-15-56-27-725_com.zhiliaoapp.musically.jpg",
+        "Screenrecorder-2026-02-14-15-00-04-474.mp4",
+        "Screenrecorder-2026-02-16-19-31-30-161.mp4",
+        "Screenrecorder-2026-02-19-22-25-42-887.mp4",
+        "Screenrecorder-2026-02-19-22-27-18-297.mp4",
+        "Screenrecorder-2026-02-19-22-35-08-217.mp4",
+        "Screenrecorder-2026-02-20-09-13-16-343.mp4",
+        "Screenrecorder-2026-02-20-17-54-34-633.mp4",
+        "Screenrecorder-2026-02-20-18-26-44-579.mp4",
+        "Screenrecorder-2026-02-20-19-01-16-22.mp4",
+        "Screenrecorder-2026-02-21-08-29-41-146.mp4",
+        "Screenrecorder-2026-02-22-03-37-56-979.mp4",
+        "Screenrecorder-2026-02-22-17-40-30-974.mp4",
+        "Screenrecorder-2026-02-23-00-42-35-259.mp4",
+        "Screenrecorder-2026-02-23-00-43-48-704.mp4",
+        "Screenrecorder-2026-02-23-00-49-30-788.mp4",
+        "Screenrecorder-2026-02-24-01-12-56-328.mp4",
+        "Screenrecorder-2026-02-24-01-14-44-940.mp4",
+        "Screenrecorder-2026-02-24-01-16-01-205.mp4",
+        "Screenrecorder-2026-02-24-01-16-53-870.mp4",
+        "Screenrecorder-2026-02-24-17-36-30-542.mp4",
+        "Screenrecorder-2026-02-24-19-14-20-122.mp4",
+        "Screenrecorder-2026-02-25-08-21-40-771.mp4",
+        "Screenrecorder-2026-02-25-15-48-59-340.mp4",
+        "Screenrecorder-2026-02-25-16-27-04-397.mp4",
+        "Screenrecorder-2026-02-25-20-46-35-252.mp4",
+        "Screenrecorder-2026-02-27-07-47-18-788.mp4",
+        "Screenrecorder-2026-02-27-20-37-23-724.mp4",
+        "Screenrecorder-2026-02-27-21-07-12-337.mp4",
+        "Screenrecorder-2026-02-28-13-44-18-854.mp4",
+        "Screenrecorder-2026-03-01-10-37-37-844.mp4",
+        "Screenrecorder-2026-03-01-13-30-47-358.mp4",
+        "Screenrecorder-2026-03-01-14-08-14-789.mp4",
+        "Screenrecorder-2026-03-01-17-45-04-459.mp4",
+        "Screenrecorder-2026-03-01-22-19-01-450.mp4",
+        "Screenrecorder-2026-03-03-01-10-08-478.mp4",
+        "Screenrecorder-2026-03-03-23-49-32-625.mp4",
+        "Screenrecorder-2026-03-03-23-50-09-368.mp4",
+        "Screenrecorder-2026-03-04-05-17-38-989.mp4",
+        "Screenrecorder-2026-03-05-07-01-48-113.mp4",
+        "Screenrecorder-2026-03-05-09-33-31-207.mp4",
+        "Screenrecorder-2026-03-05-10-08-18-216.mp4",
+        "Screenrecorder-2026-03-05-10-49-03-318.mp4",
+        "Screenrecorder-2026-03-06-05-28-02-285.mp4",
+        "Screenrecorder-2026-03-06-07-13-36-923.mp4",
+        "Screenrecorder-2026-03-06-15-44-25-836.mp4",
+        "Screenrecorder-2026-03-06-15-52-45-735.mp4",
+        "Screenrecorder-2026-03-08-05-42-39-218.mp4",
+        "Screenrecorder-2026-03-09-06-22-19-289.mp4",
+        "Screenrecorder-2026-03-11-05-31-06-465.mp4",
+        "Screenrecorder-2026-03-11-18-13-13-897.mp4",
+        "Screenrecorder-2026-03-11-23-25-33-990.mp4",
+        "Screenrecorder-2026-03-14-04-15-04-629.mp4",
+        "Screenrecorder-2026-03-17-19-43-23-305.mp4",
+        "Screenrecorder-2026-03-18-23-35-54-506.mp4",
+        "Screenrecorder-2026-03-18-23-46-45-865.mp4",
+        "Screenrecorder-2026-03-19-09-44-00-859.mp4",
+        "Screenrecorder-2026-03-19-10-13-33-966.mp4",
+        "Screenrecorder-2026-03-19-11-24-52-435.mp4",
+        "Screenrecorder-2026-03-19-11-30-05-190.mp4",
+        "Screenrecorder-2026-03-19-11-39-02-557.mp4",
+        "Screenrecorder-2026-03-19-11-56-19-193.mp4",
+        "Screenrecorder-2026-03-19-12-11-12-653.mp4",
+        "Screenrecorder-2026-03-19-13-36-56-542.mp4",
+        "Screenrecorder-2026-03-19-21-20-36-545.mp4",
+        "Screenrecorder-2026-03-20-16-48-39-12.mp4",
+        "Screenrecorder-2026-03-22-08-10-38-347.mp4",
+        "Screenrecorder-2026-03-22-21-46-03-891.mp4",
+        "Screenrecorder-2026-03-23-09-23-47-827.mp4",
+        "Screenrecorder-2026-03-23-09-42-17-232.mp4",
+        "Screenrecorder-2026-03-23-09-54-29-326.mp4",
+        "Screenrecorder-2026-03-23-12-16-27-20.mp4",
+        "Screenrecorder-2026-03-23-14-14-24-945.mp4",
+        "Screenrecorder-2026-03-23-14-18-39-320.mp4",
+        "Screenrecorder-2026-03-24-06-08-59-77.mp4",
+        "Screenrecorder-2026-03-24-06-10-24-726.mp4",
+        "Screenrecorder-2026-03-24-06-13-05-622.mp4",
+        "Screenrecorder-2026-03-24-06-14-43-392.mp4",
+        "Screenrecorder-2026-03-24-06-17-40-289.mp4",
+        "Screenrecorder-2026-03-24-06-19-33-610.mp4",
+        "Screenrecorder-2026-03-24-06-20-36-923.mp4",
+        "Screenrecorder-2026-03-24-22-28-58-409.mp4",
+        "Screenrecorder-2026-03-25-21-32-14-770.mp4",
+        "Screenrecorder-2026-03-29-01-47-56-848.mp4",
+        "Screenrecorder-2026-03-29-11-30-52-207.mp4",
+        "Screenrecorder-2026-03-29-11-33-06-356.mp4",
+        "Screenrecorder-2026-03-30-05-53-15-966.mp4",
+        "Screenrecorder-2026-03-30-21-54-43-936.mp4",
+        "Screenrecorder-2026-03-31-04-59-51-542.mp4",
+        "Screenrecorder-2026-04-01-18-28-13-77.mp4",
+        "Screenrecorder-2026-04-02-10-54-05-508.mp4",
+        "Screenrecorder-2026-04-02-10-58-24-605.mp4",
+        "Screenrecorder-2026-04-04-07-51-55-48.mp4",
+        "Screenrecorder-2026-04-04-08-09-14-957.mp4",
+        "Screenrecorder-2026-04-04-08-14-26-686.mp4",
+        "Screenrecorder-2026-04-04-08-18-20-211.mp4",
+        "Screenrecorder-2026-04-04-08-30-55-642.mp4",
+        "Screenrecorder-2026-04-04-19-54-38-965.mp4",
+        "Screenrecorder-2026-04-05-09-36-05-806.mp4",
+        "Screenrecorder-2026-04-05-16-12-16-841.mp4",
+        "Screenrecorder-2026-04-06-19-10-22-522.mp4",
+        "Screenrecorder-2026-04-07-11-18-30-360.mp4",
+        "Screenrecorder-2026-04-08-13-30-59-54.mp4",
+        "Screenrecorder-2026-04-08-13-42-36-458.mp4",
+        "Screenrecorder-2026-04-08-22-00-50-887.mp4",
+        "Screenrecorder-2026-04-12-08-33-02-483.mp4",
+        "Screenrecorder-2026-04-12-16-33-33-65.mp4",
+        "Screenrecorder-2026-04-12-16-37-59-710.mp4",
+        "Screenrecorder-2026-04-12-16-41-20-189.mp4",
+        "Screenrecorder-2026-04-13-03-26-51-657.mp4",
+        "Screenrecorder-2026-04-13-03-28-24-733.mp4",
+        "Screenrecorder-2026-04-13-03-51-35-487.mp4",
+        "Screenrecorder-2026-04-13-06-26-34-271.mp4",
+        "Screenrecorder-2026-04-13-18-31-32-47.mp4",
+        "Screenrecorder-2026-04-17-19-10-39-552.mp4",
+        "Screenrecorder-2026-04-18-06-08-14-329.mp4",
+        "Screenrecorder-2026-04-19-06-10-06-775.mp4",
+        "Screenrecorder-2026-04-26-07-06-42-986.mp4",
+        "Screenrecorder-2026-05-01-19-06-52-957.mp4"
     ],
     frases: [
-        "TE AMO", "ERES MI TODO", "MI VIDA", "ME ENCANTAS", "ERES MI MUNDO", 
-        "MI CIELO", "MI TESORO", "CONTIGO SIEMPRE", "MI REINA", "ERES MAGIA",
-        "MI LUGAR SEGURO", "MI DESTINO", "TE ADORO", "ERES ÚNICA", "MI AMOR",
-        "SIEMPRE JUNTOS", "MI PEDACITO DE CIELO", "MI RAZÓN DE SER", "ERES MI LUZ"
+        "TE AMO", "ME ENCANTAS", "MI AMOR", "MI VIDA", "MI REINA", "MI PRINCESA", "MI MUNDO", "DUEÑA DE MI SER", "PRECIOSA REINA", "MAMASITA", "CHULA",
+        "MI CIELO", "MI TESORO", "MI TODO", "MI RAZÓN DE SER", "MI LUGAR SEGURO", "MI DESTINO", "ERES MAGIA", "SIEMPRE JUNTOS", "MI PEDACITO DE CIELO",
+        "MI LUZ", "MI CORAZÓN", "ERES ÚNICA", "TE ADORO", "MI BELLA", "MI COMPLEMENTO", "MI SUEÑO REALIDAD", "ERES MI VIDA", "MI PASIÓN", "MI ALEGRÍA",
+        "MI ETERNIDAD", "MI BENDICIÓN", "MI ÁNGEL", "MI DULZURA", "MI REFUGIO", "MI PAZ", "MI MOTIVACIÓN", "MI INSPIRACIÓN", "MI GRAN AMOR", "MI MEJOR DECISIÓN",
+        "MI COMPAÑERA", "MI ALMA GEMELA", "MI OTRA MITAD", "MI MUSA", "MI DELIRIO", "MI DESEO", "MI ADORACIÓN", "MI PRECIOSA", "MI HERMOSA", "MI LINDA",
+        "MI CIELO ESTRELLADO", "MI SOL", "MI LUNA", "MI ESTRELLA", "MI CAMINO", "MI NORTE", "MI ANCLA", "MI REFLEJO", "MI VERDAD", "MI CANCIÓN",
+        "MI POEMA", "MI HISTORIA", "MI PRESENTE", "MI FUTURO", "MI SIEMPRE", "MI JAMÁS SIN TI", "MI ÚNICO AMOR", "MI AMOR ETERNO", "MI AMOR PURO", "MI AMOR VERDADERO",
+        "MI VIDA ENTERA", "MI MUNDO ENTERO", "MI REINA BELLA", "MI PRINCESA HERMOSA", "MI CHULA LINDA", "MI MAMASITA RICA", "MI PRECIOSA MUJER", "MI DUEÑA", "MI SEÑORA", "MI COMPAÑERA DE VIDA",
+        "MI APOYO", "MI FUERZA", "MI VALOR", "MI ORGULLO", "MI TESORO DIVINO", "MI REGALO DEL CIELO", "MI MILAGRO", "MI SUERTE", "MI FORTUNA", "MI RIQUEZA",
+        "MI PARAÍSO", "MI GLORIA", "MI TRIUNFO", "MI ÉXITO", "MI LOGRO", "MI SUEÑO CUMPLIDO", "MI REALIDAD PREFERIDA", "MI TODO Y MÁS", "MI INFINITO", "POR SIEMPRE TUYO"
     ]
 };
 
@@ -226,6 +352,11 @@ function tickFase1(event) {
 const btnIniciar = document.getElementById('btn-iniciar');
 if (btnIniciar) {
     btnIniciar.addEventListener('click', () => {
+        if (btnIniciar.disabled) return;
+        btnIniciar.disabled = true;
+        btnIniciar.style.opacity = '0.5';
+        btnIniciar.innerText = 'Iniciando...';
+        
         createjs.Ticker.removeAllEventListeners("tick");
         document.getElementById('fase1-container').style.opacity = '0';
         audioHabilitado = true;
@@ -258,6 +389,9 @@ function simularCarga() {
    FASE 2: GALAXIA 3D (Three.js)
    ========================================== */
 function iniciarFase2() {
+    if (fase2Iniciada) return;
+    fase2Iniciada = true;
+    
     document.getElementById('cargando').style.display = 'none';
     document.getElementById('fase2-container').style.display = 'block';
     crearEstrellasCSS(150);
@@ -336,28 +470,57 @@ function crearAnilloTexto() {
 }
 
 function crearMensajesAmor() {
-    // 1. Añadir fotos reales de img/
+    // 1. Añadir fotos y videos reales de img/
     MEDIA_CONFIG.mensajes.forEach((filename, i) => {
         const url = 'img/' + filename;
-        const tex = cargadorTexturas.load(url, (loadedTex) => {
-            loadedTex.anisotropy = renderizador.capabilities.getMaxAnisotropy();
-            loadedTex.minFilter = THREE.LinearMipmapLinearFilter;
-            loadedTex.magFilter = THREE.LinearFilter;
-        });
+        let material;
+
+        if (filename.toLowerCase().endsWith('.mp4')) {
+            const video = document.createElement('video');
+            video.src = url;
+            video.loop = true;
+            video.muted = true;
+            video.playsInline = true;
+            video.autoplay = true;
+            video.crossOrigin = 'anonymous';
+            video.setAttribute('webkit-playsinline', 'true');
+            video.style.display = 'none';
+            document.body.appendChild(video);
+            
+            video.load();
+            video.play().catch(e => {
+                const retryPlay = () => {
+                    video.play();
+                    document.removeEventListener('click', retryPlay);
+                    document.removeEventListener('touchstart', retryPlay);
+                };
+                document.addEventListener('click', retryPlay);
+                document.addEventListener('touchstart', retryPlay);
+            });
+            
+            const videoTex = new THREE.VideoTexture(video);
+            videoTex.minFilter = THREE.LinearFilter;
+            videoTex.magFilter = THREE.LinearFilter;
+            material = new THREE.MeshBasicMaterial({ map: videoTex, side: THREE.DoubleSide });
+        } else {
+            const tex = cargadorTexturas.load(url, (loadedTex) => {
+                loadedTex.anisotropy = renderizador.capabilities.getMaxAnisotropy();
+                loadedTex.minFilter = THREE.LinearMipmapLinearFilter;
+                loadedTex.magFilter = THREE.LinearFilter;
+            });
+            material = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, transparent: true });
+        }
         
-        const mesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(4, 4), 
-            new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, transparent: true })
-        );
+        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), material);
         
-        // Distribución más amplia para 122 fotos
+        // Distribución más amplia para 122+ elementos
         const dist = 15 + Math.random() * 25; 
         const ang = Math.random() * Math.PI * 2;
         const alt = (Math.random() - 0.5) * 30; 
         
         mesh.position.set(Math.cos(ang) * dist, alt, Math.sin(ang) * dist);
         escena.add(mesh);
-        objectsMessage.push({ malla: mesh, alturaOriginal: alt, velocidad: 0.1 + Math.random() * 0.15, angulo: ang, distancia: dist }); // Más lento (antes 0.15-0.25)
+        objectsMessage.push({ malla: mesh, alturaOriginal: alt, velocidad: 0.1 + Math.random() * 0.15, angulo: ang, distancia: dist });
     });
 
     // 2. Añadir frases de amor
@@ -378,6 +541,8 @@ function crearMensajesAmor() {
 }
 
 function configurarEventosFase2() {
+    document.removeEventListener('click', manejarToque);
+    document.removeEventListener('touchstart', manejarToque);
     document.addEventListener('click', manejarToque);
     document.addEventListener('touchstart', manejarToque);
     const btnAudio = document.getElementById('alternar-audio');
@@ -391,8 +556,15 @@ function configurarEventosFase2() {
     });
 }
 
+let ultimoToque = 0;
 function manejarToque(e) {
     if (e.target.closest('#alternar-audio') || e.target.closest('.modal')) return;
+    
+    // Evitar doble disparo (click y touch)
+    const ahora = Date.now();
+    if (ahora - ultimoToque < 300) return;
+    ultimoToque = ahora;
+
     reproducirAudio();
     const x = e.clientX || (e.touches && e.touches[0].clientX);
     const y = e.clientY || (e.touches && e.touches[0].clientY);
@@ -410,23 +582,22 @@ function manejarToque(e) {
 }
 
 function crearExplosionUI(x, y) {
-    // SALEN VARIAS PALABRAS A LA VEZ (5 FRASES)
-    for (let i = 0; i < 5; i++) {
-        setTimeout(() => {
-            const div = document.createElement('div');
-            div.className = 'explosion-texto';
-            div.innerText = MEDIA_CONFIG.frases[Math.floor(Math.random() * MEDIA_CONFIG.frases.length)];
-            
-            // Dispersión de las palabras
-            const offX = (Math.random() - 0.5) * 200;
-            const offY = (Math.random() - 0.5) * 200;
-            
-            div.style.left = (x + offX) + 'px';
-            div.style.top = (y + offY) + 'px';
-            document.body.appendChild(div);
-            setTimeout(() => div.remove(), 4000); // Más tiempo en pantalla (lento)
-        }, i * 200);
-    }
+    // SOLO UN MENSAJE POR CLIC (EN ORDEN SECUENCIAL)
+    const div = document.createElement('div');
+    div.className = 'explosion-texto';
+    
+    // Obtener la frase actual y avanzar el índice
+    div.innerText = MEDIA_CONFIG.frases[indiceFrase];
+    indiceFrase = (indiceFrase + 1) % MEDIA_CONFIG.frases.length;
+    
+    // Suave dispersión
+    const offX = (Math.random() - 0.5) * 100;
+    const offY = (Math.random() - 0.5) * 100;
+    
+    div.style.left = (x + offX) + 'px';
+    div.style.top = (y + offY) + 'px';
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 4000); 
 }
 
 function crearLluviaCorazonesUI() {
