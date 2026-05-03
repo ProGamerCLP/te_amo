@@ -24,6 +24,10 @@ globalVideoTexture.minFilter = THREE.LinearFilter;
 globalVideoTexture.magFilter = THREE.LinearFilter;
 globalVideoTexture.generateMipmaps = false;
 
+// Vincular al DOM (Obligatorio para algunos navegadores móviles)
+globalVideoElement.style.display = 'none';
+document.body.appendChild(globalVideoElement);
+
 const cargadorTexturas = new THREE.TextureLoader();
 const cargadorFuentes = new THREE.FontLoader();
 
@@ -710,33 +714,50 @@ function startSequentialVideoPlayback() {
     if (videosArray.length === 0) return;
     
     let currentVideoIndex = 0;
-    const playDuration = 8000; // Reproduce cada video por 8 segundos
+    const playDuration = 8000;
 
     function playNextVideo() {
-        // 1. Devolver el video anterior a su estado "apagado"
+        // Apagar el video anterior
         const prevIndex = currentVideoIndex === 0 ? videosArray.length - 1 : currentVideoIndex - 1;
         const prevData = videosArray[prevIndex];
-        prevData.mesh.material = prevData.originalMaterial;
+        if (prevData && prevData.mesh) {
+            prevData.mesh.material = prevData.originalMaterial;
+        }
 
-        // 2. Encender la malla del video actual
+        // Encender el actual
         const currentData = videosArray[currentVideoIndex];
-        
-        // Le pasamos la textura viva a esta malla
         currentData.mesh.material = new THREE.MeshBasicMaterial({ 
             map: globalVideoTexture, 
             side: THREE.DoubleSide 
         });
 
-        // 3. Cargamos la ruta en el reproductor maestro y reproducimos
         globalVideoElement.src = currentData.url;
         globalVideoElement.load();
-        globalVideoElement.play().catch(e => console.log("Esperando toque en pantalla para autorizar video..."));
 
-        // 4. Preparar el turno del siguiente
-        currentVideoIndex = (currentVideoIndex + 1) % videosArray.length;
-        setTimeout(playNextVideo, playDuration);
+        // Limpiar cualquier temporizador previo
+        if (window.videoTimeout) clearTimeout(window.videoTimeout);
+
+        // Si el video carga correctamente, lo reproducimos
+        globalVideoElement.oncanplay = () => {
+            globalVideoElement.play().catch(e => {
+                console.warn("Autoplay bloqueado temporalmente. Se requiere toque en pantalla.");
+            });
+            // Programar el siguiente video solo si este funcionó
+            window.videoTimeout = setTimeout(() => {
+                currentVideoIndex = (currentVideoIndex + 1) % videosArray.length;
+                playNextVideo();
+            }, playDuration);
+        };
+
+        // SI HAY ERROR 404, LO SALTAMOS INMEDIATAMENTE
+        globalVideoElement.onerror = () => {
+            console.error("Error 404: Video no encontrado o cargando en GitHub. Saltando:", currentData.url);
+            currentVideoIndex = (currentVideoIndex + 1) % videosArray.length;
+            // Salto súper rápido de medio segundo para no pausar la experiencia
+            window.videoTimeout = setTimeout(playNextVideo, 500); 
+        };
     }
 
-    // Iniciar el ciclo infinito 5 segundos después de que cargue la galaxia
+    // Arrancar el ciclo
     setTimeout(playNextVideo, 5000);
 }
