@@ -448,6 +448,10 @@ function crearSaturno() {
         tex.anisotropy = renderizador.capabilities.getMaxAnisotropy();
         saturno.material.map = tex;
         saturno.material.needsUpdate = true;
+    }, undefined, (err) => {
+        console.error("Error cargando textura de Saturno:", MEDIA_CONFIG.saturno);
+        // Color de respaldo si falla la imagen
+        saturno.material.color.setHex(0xff69b4);
     });
     const geoAtmosfera = new THREE.SphereGeometry(4.2, 64, 64);
     const matAtmosfera = new THREE.MeshPhongMaterial({ color: 0x88aaff, transparent: true, opacity: 0.1, side: THREE.BackSide });
@@ -495,6 +499,11 @@ function crearMensajesAmor() {
             video.onerror = () => console.error("Error cargando video:", url);
             
             video.load();
+            
+            // Forzar play en cuanto sea posible (aunque sea silenciado)
+            video.oncanplay = () => {
+                video.play().catch(() => { /* Bloqueado por navegador hasta interacción */ });
+            };
             
             const videoTex = new THREE.VideoTexture(video);
             videoTex.minFilter = THREE.LinearFilter;
@@ -564,6 +573,12 @@ function manejarToque(e) {
     ultimoToque = ahora;
 
     reproducirAudio();
+    
+    // DESBLOQUEO DE VIDEOS: Intentar reproducir todos los videos de la página al primer toque
+    document.querySelectorAll('video').forEach(v => {
+        v.play().catch(e => console.log("Video aún bloqueado"));
+    });
+
     const x = e.clientX || (e.touches && e.touches[0].clientX);
     const y = e.clientY || (e.touches && e.touches[0].clientY);
     if (x && y) {
