@@ -493,8 +493,13 @@ function crearAnilloTexto() {
 
 function crearMensajesAmor() {
     // 1. Añadir fotos y videos reales de img/
-    MEDIA_CONFIG.mensajes.forEach((filename, i) => {
-        const url = 'img/' + filename;
+    // Limitamos a los 120 más recientes para evitar que la GPU explote (Context Lost)
+    const mensajesLimitados = MEDIA_CONFIG.mensajes.slice(-120);
+    
+    mensajesLimitados.forEach((filename, i) => {
+        const isVideo = filename.toLowerCase().endsWith('.mp4');
+        // Los videos están en la raíz según GitHub, las fotos en img/
+        const url = isVideo ? filename : 'img/' + filename;
         let material;
 
         if (filename.toLowerCase().endsWith('.mp4')) {
@@ -507,7 +512,11 @@ function crearMensajesAmor() {
             video.setAttribute('webkit-playsinline', 'true');
             video.setAttribute('preload', 'metadata');
             
-            video.onerror = () => console.error("Fallo crítico en video:", url);
+            video.onerror = () => {
+                console.error("Fallo crítico en video:", url);
+                // Si el video falla, no queremos que la malla vacía consuma recursos
+                if (material && material.map) material.map.dispose();
+            };
             
             // Lógica de reinicio tras 30 segundos
             video.onended = () => {
@@ -527,7 +536,8 @@ function crearMensajesAmor() {
         } else {
             const tex = cargadorTexturas.load(url, (loadedTex) => {
                 loadedTex.anisotropy = renderizador.capabilities.getMaxAnisotropy();
-                loadedTex.minFilter = THREE.LinearMipmapLinearFilter;
+                loadedTex.generateMipmaps = false; // Ahorro de memoria extra
+                loadedTex.minFilter = THREE.LinearFilter;
                 loadedTex.magFilter = THREE.LinearFilter;
             });
             material = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, transparent: true });
