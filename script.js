@@ -405,14 +405,8 @@ function iniciarFase2() {
             fuente = fuenteCargada;
             armarEscena3D();
             
-            // INICIO ESCALONADO DE VIDEOS: Para evitar lag extremo
-            videosArray.forEach((v, index) => {
-                setTimeout(() => {
-                    v.play().catch(() => {
-                        console.log("Video bloqueado, esperando interacción");
-                    });
-                }, 10000 + (index * 500)); // Empiezan tras 10s, uno cada medio segundo
-            });
+            // INICIO SECUENCIAL DE VIDEOS: Para optimización extrema
+            startSequentialVideoPlayback();
         },
         undefined,
         (err) => {
@@ -498,8 +492,7 @@ function crearMensajesAmor() {
     
     mensajesLimitados.forEach((filename, i) => {
         const isVideo = filename.toLowerCase().endsWith('.mp4');
-        // Los videos están en la raíz según GitHub, las fotos en img/
-        const url = isVideo ? filename : 'img/' + filename;
+        const url = 'img/' + filename;
         let material;
 
         if (filename.toLowerCase().endsWith('.mp4')) {
@@ -717,3 +710,32 @@ function animarFase2() {
 }
 
 window.onload = initFase1;
+
+function startSequentialVideoPlayback() {
+    if (videosArray.length === 0) return;
+    
+    let currentVideoIndex = 0;
+    const playDuration = 8000; // 8 seconds per video before switching
+
+    function playNextVideo() {
+        // Pause all videos to free up decoding memory
+        videosArray.forEach(v => {
+            if (!v.paused) v.pause();
+        });
+
+        // Get the current video in the queue
+        const currentVideo = videosArray[currentVideoIndex];
+        
+        // Play it (wrapped in a catch for browser autoplay policies)
+        currentVideo.play().catch(e => console.log("Waiting for user interaction to play video"));
+
+        // Advance the index, loop back to 0 if we reach the end
+        currentVideoIndex = (currentVideoIndex + 1) % videosArray.length;
+
+        // Schedule the next sequence
+        setTimeout(playNextVideo, playDuration);
+    }
+
+    // Start the endless loop after a 5-second initial scene delay
+    setTimeout(playNextVideo, 5000);
+}
