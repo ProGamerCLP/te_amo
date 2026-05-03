@@ -491,23 +491,15 @@ function crearMensajesAmor() {
             video.playsInline = true;
             video.autoplay = true;
             video.setAttribute('webkit-playsinline', 'true');
-            video.setAttribute('preload', 'auto');
-            video.style.display = 'none';
-            document.body.appendChild(video);
+            video.setAttribute('preload', 'metadata'); // Solo cargar metadatos para no saturar
             
-            // Manejo de errores para diagnóstico en GitHub
-            video.onerror = () => console.error("Error cargando video:", url);
-            
-            video.load();
-            
-            // Forzar play en cuanto sea posible (aunque sea silenciado)
-            video.oncanplay = () => {
-                video.play().catch(() => { /* Bloqueado por navegador hasta interacción */ });
-            };
+            // NO añadir al document.body para evitar lag
+            video.onerror = () => console.error("Fallo crítico en video:", url);
             
             const videoTex = new THREE.VideoTexture(video);
             videoTex.minFilter = THREE.LinearFilter;
             videoTex.magFilter = THREE.LinearFilter;
+            
             material = new THREE.MeshBasicMaterial({ map: videoTex, side: THREE.DoubleSide });
         } else {
             const tex = cargadorTexturas.load(url, (loadedTex) => {
