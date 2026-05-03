@@ -14,7 +14,7 @@ const cargadorFuentes = new THREE.FontLoader();
 // Configuración de Medios
 const MEDIA_CONFIG = {
     audio: 'Manuel Carrasco - Uno X Uno.mp3',
-    saturno: 'galaxy-love2-main/1.jpg',
+    saturno: 'img/1.jpg', // Cambiado a img/1.jpg por ser más probable
     mensajes: [
         "Screenshot_2026-02-14-21-47-15-870_com.zhiliaoapp.musically.jpg",
         "Screenshot_2026-02-15-19-23-29-553_com.zhiliaoapp.musically.jpg",
