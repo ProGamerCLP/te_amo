@@ -12,8 +12,13 @@ let videosArray = []; // Para gestionar el ciclo de los videos
 // REPRODUCTOR GLOBAL ÚNICO (Optimización extrema para evitar Context Lost)
 let globalVideoElement = document.createElement('video');
 globalVideoElement.muted = true;
+globalVideoElement.defaultMuted = true;
 globalVideoElement.playsInline = true;
 globalVideoElement.crossOrigin = "anonymous";
+// Atributos estrictos para obligar al autoplay silencioso en móviles
+globalVideoElement.setAttribute('playsinline', 'true');
+globalVideoElement.setAttribute('webkit-playsinline', 'true');
+globalVideoElement.setAttribute('muted', 'true');
 let globalVideoTexture = new THREE.VideoTexture(globalVideoElement);
 globalVideoTexture.minFilter = THREE.LinearFilter;
 globalVideoTexture.magFilter = THREE.LinearFilter;
@@ -25,7 +30,7 @@ const cargadorFuentes = new THREE.FontLoader();
 // Configuración de Medios
 const MEDIA_CONFIG = {
     audio: 'Manuel Carrasco - Uno X Uno.mp3',
-    saturno: '1.jpg', // Intentar en la raíz directamente
+    saturno: 'img/1.jpg', 
     mensajes: [
         "Screenshot_2026-02-14-21-47-15-870_com.zhiliaoapp.musically.jpg",
         "Screenshot_2026-02-15-19-23-29-553_com.zhiliaoapp.musically.jpg",
@@ -582,10 +587,10 @@ function manejarToque(e) {
 
     reproducirAudio();
     
-    // DESBLOQUEO DE VIDEOS: Intentar reproducir todos los videos de la página al primer toque
-    document.querySelectorAll('video').forEach(v => {
-        v.play().catch(e => console.log("Video aún bloqueado"));
-    });
+    // DESBLOQUEO DE VIDEO GLOBAL: Un solo elemento para ahorrar recursos
+    if (globalVideoElement && globalVideoElement.src) {
+        globalVideoElement.play().catch(e => console.log("Esperando carga completa para reproducir..."));
+    }
 
     const x = e.clientX || (e.touches && e.touches[0].clientX);
     const y = e.clientY || (e.touches && e.touches[0].clientY);
