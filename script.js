@@ -486,22 +486,16 @@ function crearMensajesAmor() {
             video.muted = true;
             video.playsInline = true;
             video.autoplay = true;
-            video.crossOrigin = 'anonymous';
             video.setAttribute('webkit-playsinline', 'true');
+            video.setAttribute('preload', 'auto');
             video.style.display = 'none';
             document.body.appendChild(video);
-
+            
+            // Manejo de errores para diagnóstico en GitHub
+            video.onerror = () => console.error("Error cargando video:", url);
+            
             video.load();
-            video.play().catch(e => {
-                const retryPlay = () => {
-                    video.play();
-                    document.removeEventListener('click', retryPlay);
-                    document.removeEventListener('touchstart', retryPlay);
-                };
-                document.addEventListener('click', retryPlay);
-                document.addEventListener('touchstart', retryPlay);
-            });
-
+            
             const videoTex = new THREE.VideoTexture(video);
             videoTex.minFilter = THREE.LinearFilter;
             videoTex.magFilter = THREE.LinearFilter;
